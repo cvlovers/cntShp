@@ -1,13 +1,16 @@
 # USAGE
 # python3 object_tracking.py --video ./shep.mp4 --yolo ./yolov5-master --weights ./best.pt
-import shutil
-import os
-import cv2
 import argparse
-import time
-import trackedObject
-import numpy as np
+import os
 import random
+import shutil
+import time
+
+import cv2
+import numpy as np
+import json
+
+import trackedObject
 
 #split command line arguments and assign them to variables
 parser = argparse.ArgumentParser()
@@ -122,6 +125,8 @@ def intersection_over_union(new_box, old_box):#to calculate a similarity ratio b
 	# return the intersection over union value
     return iou
 
+
+def find_Similar_Box(new_found_box,old_boxes):
     #find the most similar old box for new_found_box
     if old_boxes==[]:
         return -1
@@ -141,9 +146,10 @@ out2= cv2.VideoWriter('./result.mp4',cv2.VideoWriter_fourcc(*'mp4v'),30,size)
 
 i=0
 id=0
-loc_history=[]
+#loc_history=[]
 trackablesList=[]
 color_list=[]
+loc_dict=dict()
 
 while cap.isOpened():
     # Capture frame-by-frame
@@ -166,12 +172,14 @@ while cap.isOpened():
             if close_ind<0:#create new box
                 new_object_found=trackedObject.trackableObject(j,id)
                 trackablesList.append(new_object_found)
-                loc_history.append([j[:2]])
+                #loc_history.append([j[:2]])
+                loc_dict[id]=[j[:2]]
                 color_list.append((random.randint(0,255),random.randint(0,255),random.randint(0,255)))
                 id+=1
             else:#match with existing object
                 trackablesList[close_ind].updateLoc(j)
-                loc_history[close_ind].append(j[:2])
+                #loc_history[close_ind].append(j[:2])
+                loc_dict[close_ind].append(j[:2])
 
         #start tracking again for active boxes
         for object in trackablesList:
@@ -182,14 +190,13 @@ while cap.isOpened():
         for ind,current_object in enumerate(trackablesList):
             rect=current_object.updateTracker(frame)
             if current_object.status==True:
-                loc_history[ind].append(list(map(int,rect[:2])))
+                #loc_history[ind].append(list(map(int,rect[:2])))
+                loc_dict[ind].append(list(map(int,rect[:2])))
             else:
-                loc_history[ind]=[]
+                pass
+                #loc_history[ind]=[]
     
-    
-    print(loc_history)
     print(len(trackablesList))
-
     #print frame number to image
     cv2.putText(frame,str(i),(10,10),cv2.FONT_HERSHEY_SIMPLEX, 1,(255, 255, 255, 255), 3)
     
@@ -198,12 +205,11 @@ while cap.isOpened():
         draw_boxes(frame,trackablesList,i)
 
     #draw colorful path
-    for ind,object_hist in enumerate(loc_history):
-        color=color_list[ind]
-        for box in object_hist:
-            cx = int(box[0] + box[2]/2)
-            cy = int(box[1] + box[3]/2)
-            cv2.circle(frame,(cx,cy),4,color,-1)
+    for key in loc_dict:
+        if trackablesList[key].status==True:
+            color=color_list[key]
+            for box in loc_dict[key]:
+                cv2.circle(frame,(box[0],box[1]),4,color,-1)
 
     i=i+1
     cv2.imshow('window', frame)
@@ -215,5 +221,8 @@ while cap.isOpened():
 cap.release()
 out2.release()
 cv2.destroyAllWindows()
+json_obj = json.dumps(loc_dict)
+file = open(vid_path.split(".")[0]+".json", 'w',encoding="utf-8")
+file.write(json_obj)
 shutil.rmtree('./objectTrackTemp',ignore_errors=True)
 shutil.rmtree('./objectTrackTemp',ignore_errors=True)
