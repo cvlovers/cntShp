@@ -173,13 +173,15 @@ while cap.isOpened():
                 new_object_found=trackedObject.trackableObject(j,id)
                 trackablesList.append(new_object_found)
                 #loc_history.append([j[:2]])
-                loc_dict[id]=[[j[:2],i]]
+                loc_dict[id]=dict()
+                loc_dict[id]={"id":id,"pos":[]}
+                loc_dict[id]["pos"].append({"frame":i,"x":j[0],"y":j[1]})
                 color_list.append((random.randint(0,255),random.randint(0,255),random.randint(0,255)))
                 id+=1
             else:#match with existing object
                 trackablesList[close_ind].updateLoc(j)
                 #loc_history[close_ind].append(j[:2])
-                loc_dict[close_ind].append([j[:2],i])
+                loc_dict[close_ind]["pos"].append({"frame":i,"x":j[0],"y":j[1]})
 
         #start tracking again for active boxes
         for object in trackablesList:
@@ -192,7 +194,7 @@ while cap.isOpened():
             if current_object.status==True:
                 #loc_history[ind].append(list(map(int,rect[:2])))
                 j=list(map(int,rect))
-                loc_dict[ind].append([j[:2],i])
+                loc_dict[ind]["pos"].append({"frame":i,"x":j[0],"y":j[1]})
             else:
                 pass
                 #loc_history[ind]=[]
@@ -209,8 +211,8 @@ while cap.isOpened():
     for key in loc_dict:
         if trackablesList[key].status==True:
             color=color_list[key]
-            for box in loc_dict[key]:
-                cv2.circle(frame,box[0],4,color,-1)
+            for box in loc_dict[key]["pos"]:
+                cv2.circle(frame,(box["x"],box["y"]),4,color,-1)
 
     i=i+1
     cv2.imshow('window', frame)
