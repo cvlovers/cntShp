@@ -175,13 +175,13 @@ while cap.isOpened():
                 #loc_history.append([j[:2]])
                 loc_dict[id]=dict()
                 loc_dict[id]={"id":id,"pos":[]}
-                loc_dict[id]["pos"].append({"frame":i,"x":j[0],"y":j[1]})
+                loc_dict[id]["pos"].append({"frame":i,"x":j[0]+j[2]//2,"y":j[1]+j[3]//2})
                 color_list.append((random.randint(0,255),random.randint(0,255),random.randint(0,255)))
                 id+=1
             else:#match with existing object
-                trackablesList[close_ind].updateLoc(j)
+                trackablesList[close_ind].updateLoc(j,w,h)
                 #loc_history[close_ind].append(j[:2])
-                loc_dict[close_ind]["pos"].append({"frame":i,"x":j[0],"y":j[1]})
+                loc_dict[close_ind]["pos"].append({"frame":i,"x":j[0]+j[2]//2,"y":j[1]+j[3]//2})
 
         #start tracking again for active boxes
         for object in trackablesList:
@@ -190,11 +190,11 @@ while cap.isOpened():
     else:
         #tracking mode
         for ind,current_object in enumerate(trackablesList):
-            rect=current_object.updateTracker(frame)
+            rect=current_object.updateTracker(frame,w,h)
             if current_object.status==True:
                 #loc_history[ind].append(list(map(int,rect[:2])))
                 j=list(map(int,rect))
-                loc_dict[ind]["pos"].append({"frame":i,"x":j[0],"y":j[1]})
+                loc_dict[ind]["pos"].append({"frame":i,"x":j[0]+j[2]//2,"y":j[1]+j[3]//2})
             else:
                 pass
                 #loc_history[ind]=[]
@@ -202,6 +202,9 @@ while cap.isOpened():
     print(len(trackablesList))
     #print frame number to image
     cv2.putText(frame,str(i),(10,10),cv2.FONT_HERSHEY_SIMPLEX, 1,(255, 255, 255, 255), 3)
+    
+
+    cv2.line(frame,(0,int(h*0.90)),(w,int(h*0.90)),(0,255,255),3)
     
     #if we detected objects, draw their bboxes
     if len(trackablesList)>0:
@@ -212,7 +215,7 @@ while cap.isOpened():
         if trackablesList[key].status==True:
             color=color_list[key]
             for box in loc_dict[key]["pos"]:
-                cv2.circle(frame,(box["x"],box["y"]),4,color,-1)
+                cv2.circle(frame,(box["x"],box["y"]),2,color,-1)
 
     i=i+1
     cv2.imshow('window', frame)
