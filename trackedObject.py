@@ -1,13 +1,14 @@
 import cv2
 
 class trackableObject:
-    def __init__(self,loc,id):
+    def __init__(self,loc,id,classid):
         self.status=True
         self.loc=list(map(int,loc))
         self.missing_frame=0
         self.diff=0
         self.tracker=None
         self.id=id
+        self.classid=classid
 
     def updateLoc(self,new_location,w,h):
         self.diff=((new_location[0]-self.loc[0])**2+(new_location[1]-self.loc[1])**2)**(0.5)
