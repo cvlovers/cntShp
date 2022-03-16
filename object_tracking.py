@@ -86,14 +86,15 @@ for i in range(jumped_len):
     txt = open(f'./objectTrackTemp/yolo_out/labels/{label_txt}')
     lines = txt.readlines()
     for line in lines:
-        temp = line[2:-1].split(' ')
-        lab_w = float(temp[2])*w
-        lab_h = float(temp[3])*h
-        x_cent = float(temp[0])*w
-        y_cent = float(temp[1])*h
+        temp = line[0:-1].split(' ')
+        an_class=int(temp[0])
+        lab_w = float(temp[3])*w
+        lab_h = float(temp[4])*h
+        x_cent = float(temp[1])*w
+        y_cent = float(temp[2])*h
         top_x = x_cent - lab_w/2
         top_y = y_cent - lab_h/2
-        line_list = [int(top_x),int(top_y),int(lab_w),int(lab_h)]
+        line_list = [int(top_x),int(top_y),int(lab_w),int(lab_h),an_class]
         txt_list.append(line_list)
     label_list.append(txt_list)
 
@@ -101,8 +102,14 @@ for i in range(jumped_len):
 def draw_boxes(frame,rects,i):
     for object in rects:
         if object.status==True:
-            cv2.rectangle(frame, object.loc, 255, 2)
-            cv2.putText(frame,str(object.id),object.loc[:2],cv2.FONT_HERSHEY_SIMPLEX, 1,(209, 80, 0, 255), 3)
+            #if object is sheep draw with green,else with purple
+            if object.classid==0:
+                color=(0, 255, 0, 255)
+            else:
+                color=(204,0,102,255)
+            cv2.rectangle(frame, object.loc, color, 2)
+            cv2.putText(frame,str(object.id),object.loc[:2],cv2.FONT_HERSHEY_SIMPLEX, 1,color, 3)
+            
 
 def intersection_over_union(new_box, old_box):#to calculate a similarity ratio between boxes
     boxA=(new_box[0],new_box[1],new_box[0]+new_box[2],new_box[1]+new_box[3])
@@ -146,6 +153,8 @@ out2= cv2.VideoWriter('./result.mp4',cv2.VideoWriter_fourcc(*'mp4v'),30,size)
 
 i=0
 id=0
+sheep_cnt=0
+goat_cnt=0
 #loc_history=[]
 trackablesList=[]
 color_list=[]
@@ -167,10 +176,11 @@ while cap.isOpened():
             object.tracker=None
         
         #update all locations with boxes from detection
+        #j=[top_left_X,top_left_y,width,height,class]
         for j in bboxes:
             close_ind=find_Similar_Box(j,trackablesList)
             if close_ind<0:#create new box
-                new_object_found=trackedObject.trackableObject(j,id)
+                new_object_found=trackedObject.trackableObject(j[:4],id,j[-1])
                 trackablesList.append(new_object_found)
                 #loc_history.append([j[:2]])
                 loc_dict[id]=dict()
@@ -178,8 +188,12 @@ while cap.isOpened():
                 loc_dict[id]["pos"].append({"frame":i,"x":j[0]+j[2]//2,"y":j[1]+j[3]//2})
                 color_list.append((random.randint(0,255),random.randint(0,255),random.randint(0,255)))
                 id+=1
+                if j[4]==0:
+                    sheep_cnt+=1
+                else:
+                    goat_cnt+=1
             else:#match with existing object
-                trackablesList[close_ind].updateLoc(j,w,h)
+                trackablesList[close_ind].updateLoc(j[:4],w,h)
                 #loc_history[close_ind].append(j[:2])
                 loc_dict[close_ind]["pos"].append({"frame":i,"x":j[0]+j[2]//2,"y":j[1]+j[3]//2})
 
@@ -199,10 +213,10 @@ while cap.isOpened():
                 pass
                 #loc_history[ind]=[]
     
-    print(len(trackablesList))
     #print frame number to image
     cv2.putText(frame,str(i),(10,10),cv2.FONT_HERSHEY_SIMPLEX, 1,(255, 255, 255, 255), 3)
-    
+    cv2.putText(frame,"Sheep count:"+str(sheep_cnt),(10,60),cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 255, 0, 255), 3)
+    cv2.putText(frame,"Goat count:"+str(goat_cnt),(10,110),cv2.FONT_HERSHEY_SIMPLEX, 1,(204, 0, 102, 255), 3)
 
     cv2.line(frame,(0,int(h*0.90)),(w,int(h*0.90)),(0,255,255),3)
     
