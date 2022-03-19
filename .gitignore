@@ -1,3 +1,15 @@
+*.mp4
+*.pt
+*.jpg
+*.jpeg
+*.png
+*.json
+*.make
+objectTrackTemp/
+makefile
+*.txt
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
