@@ -6,6 +6,7 @@
 *.json
 *.make
 objectTrackTemp/
+yolov5-master/
 makefile
 *.txt
 
