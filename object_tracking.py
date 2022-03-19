@@ -155,7 +155,6 @@ i=0
 id=0
 sheep_cnt=0
 goat_cnt=0
-#loc_history=[]
 trackablesList=[]
 color_list=[]
 loc_dict=dict()
@@ -182,36 +181,42 @@ while cap.isOpened():
             if close_ind<0:#create new box
                 new_object_found=trackedObject.trackableObject(j[:4],id,j[-1])
                 trackablesList.append(new_object_found)
-                #loc_history.append([j[:2]])
                 loc_dict[id]=dict()
                 loc_dict[id]={"id":id,"pos":[]}
                 loc_dict[id]["pos"].append({"frame":i,"x":j[0]+j[2]//2,"y":j[1]+j[3]//2})
                 color_list.append((random.randint(0,255),random.randint(0,255),random.randint(0,255)))
                 id+=1
-                if j[4]==0:
-                    sheep_cnt+=1
-                else:
-                    goat_cnt+=1
+            
             else:#match with existing object
-                trackablesList[close_ind].updateLoc(j[:4],w,h)
-                #loc_history[close_ind].append(j[:2])
+                is_counted=trackablesList[close_ind].updateLoc(j[:4],w,h)
+                if is_counted==True:
+                    if trackablesList[close_ind].classid==0:
+                        print("Add 1 to sheep")
+                        sheep_cnt+=1
+                    else:
+                        print("Increase goat by 1")
+                        goat_cnt+=1
                 loc_dict[close_ind]["pos"].append({"frame":i,"x":j[0]+j[2]//2,"y":j[1]+j[3]//2})
 
         #start tracking again for active boxes
         for object in trackablesList:
             object.startTracking(frame)
 
+    
     else:
         #tracking mode
         for ind,current_object in enumerate(trackablesList):
-            rect=current_object.updateTracker(frame,w,h)
             if current_object.status==True:
-                #loc_history[ind].append(list(map(int,rect[:2])))
+                rect,is_counted=current_object.updateTracker(frame,w,h)
+                if is_counted==True:
+                    if current_object.classid==0:
+                        print("One sheep has passed the line")
+                        sheep_cnt+=1
+                    else:
+                        print("A goat is gone")
+                        goat_cnt+=1
                 j=list(map(int,rect))
                 loc_dict[ind]["pos"].append({"frame":i,"x":j[0]+j[2]//2,"y":j[1]+j[3]//2})
-            else:
-                pass
-                #loc_history[ind]=[]
     
     #print frame number to image
     cv2.putText(frame,str(i),(10,10),cv2.FONT_HERSHEY_SIMPLEX, 1,(255, 255, 255, 255), 3)
@@ -232,15 +237,20 @@ while cap.isOpened():
                 cv2.circle(frame,(box["x"],box["y"]),2,color,-1)
 
     i=i+1
-    cv2.imshow('window', frame)
+    #cv2.imshow('window', frame)
     out2.write(frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+    print("Processing...")
 
 cap.release()
 out2.release()
 cv2.destroyAllWindows()
+print("Sheep count:",sheep_cnt)
+print("Goat count:",goat_cnt)
+print("Total must be:",sheep_cnt+goat_cnt)
+print("Lenght of list:",len(trackablesList))
 json_obj = json.dumps(loc_dict)
 file = open("result.json", 'w',encoding="utf-8")
 file.write(json_obj)
