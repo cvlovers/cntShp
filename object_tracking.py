@@ -223,7 +223,7 @@ while cap.isOpened():
     cv2.putText(frame,"Sheep count:"+str(sheep_cnt),(10,60),cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 255, 0, 255), 3)
     cv2.putText(frame,"Goat count:"+str(goat_cnt),(10,110),cv2.FONT_HERSHEY_SIMPLEX, 1,(204, 0, 102, 255), 3)
 
-    cv2.line(frame,(0,int(h*0.90)),(w,int(h*0.90)),(0,255,255),3)
+    cv2.line(frame,(0,int(h*0.75)),(w,int(h*0.75)),(0,255,255),3)
     
     #if we detected objects, draw their bboxes
     if len(trackablesList)>0:

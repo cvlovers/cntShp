@@ -24,7 +24,7 @@ class trackableObject:
         else:
             self.missing_frame=0
 
-        if center[1]>=h*0.90:
+        if center[1]>=h*0.75:
             self.tracker=None
             self.status=False
             self.counted=True
