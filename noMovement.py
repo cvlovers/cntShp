@@ -11,7 +11,7 @@ for item in data:
     displacement = abs((data[item]["pos"][-1]["x"] - data[item]["pos"][0]["x"]**2) -
                        (data[item]["pos"][-1]["y"] - data[item]["pos"][0]["y"]**2)) ** 0.5
 
-    if displacement <= 20:
+    if displacement <= 20:  # TODO: See if we can get a value for this 20 from video/JSON data
         stationary_objects.append(data[item]["id"])
 
 print(stationary_objects)
