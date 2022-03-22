@@ -1,3 +1,7 @@
+""" A short script for to put detect and put every approximately stationary object on camera into a list.
+Returns a list of stationary objects.
+"""
+
 import json
 import sys
 
