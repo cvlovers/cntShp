@@ -24,11 +24,10 @@ class trackableObject:
         else:
             self.missing_frame=0
 
-        if center[1]>=h*0.75:
+        if center[1]>=h*0.6:
             self.tracker=None
             self.status=False
             self.counted=True
-            print("Will disable object",self.id,"since it passed the line with corrdinates",self.loc,"this is the proof",self.counted,"its status",self.status)
             return self.counted
 
         if self.loc[0]<0 or self.loc[1]<0 or self.loc[2]<0 or self.loc[3]<0:

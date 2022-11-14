@@ -223,7 +223,7 @@ while cap.isOpened():
     cv2.putText(frame,"Sheep count:"+str(sheep_cnt),(10,60),cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 255, 0, 255), 3)
     cv2.putText(frame,"Goat count:"+str(goat_cnt),(10,110),cv2.FONT_HERSHEY_SIMPLEX, 1,(204, 0, 102, 255), 3)
 
-    cv2.line(frame,(0,int(h*0.75)),(w,int(h*0.75)),(0,255,255),3)
+    cv2.line(frame,(0,int(h*0.6)),(w,int(h*0.6)),(0,255,255),3)
     
     #if we detected objects, draw their bboxes
     if len(trackablesList)>0:
@@ -252,7 +252,7 @@ print("Goat count:",goat_cnt)
 print("Total must be:",sheep_cnt+goat_cnt)
 print("Lenght of list:",len(trackablesList))
 json_obj = json.dumps(loc_dict)
-file = open("result.json", 'w',encoding="utf-8")
+file = open("result_shep_cropped.json", 'w',encoding="utf-8")
 file.write(json_obj)
 shutil.rmtree('./objectTrackTemp',ignore_errors=True)
 shutil.rmtree('./objectTrackTemp',ignore_errors=True)
