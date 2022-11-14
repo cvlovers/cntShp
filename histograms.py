@@ -1,11 +1,14 @@
-import json
-import numpy as np
-import sys
-from matplotlib import pyplot as plt
-
 """ A script calculating how many frames each sheep spends on the screen & then creates a histogram.
 The histogram shows the frame count intervals and the number of sheep having frame counts in those intervals.
 """
+
+import json
+import numpy as np
+import statistics
+import sys
+from matplotlib import pyplot as plt
+from scipy.stats import norm
+
 
 file = open(sys.argv[1])
 data = json.load(file)
@@ -26,7 +29,7 @@ for item in data:
     # d = {"Sheep ID": data[item]["id"], "Frame Count": frame_count, "Sheep Speed": speed}
 
     frame_list.append(frame_count)
-    speed_list.append(speed)
+    # speed_list.append(speed)
 
 max_frame = max(frame_list)
 # max_speed = max(speed_list)
@@ -50,4 +53,12 @@ plt.hist(frame_array, color="pink", bins=100, alpha=0.75)
 plt.ylabel('Sheep Frequency')
 plt.xlabel('Frame Count')
 plt.xticks(np.arange(0, max_frame, 125))
+plt.show()
+
+x_axis = np.arange(0, max_frame, 1)
+
+mean = statistics.mean(x_axis)
+sd = statistics.stdev(x_axis)
+
+plt.plot(x_axis, norm.pdf(x_axis, mean, sd))
 plt.show()
