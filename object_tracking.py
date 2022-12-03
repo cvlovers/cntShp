@@ -41,12 +41,17 @@ jumped_len = int(length/jump_frame)
 
 
 #create temp folders and open source vid
+if os.path.exists("./objectTrackTemp"):
+    shutil.rmtree('./objectTrackTemp',ignore_errors=True) 
 os.mkdir('./objectTrackTemp')
 os.mkdir('./objectTrackTemp/imgs')
 if originalVid.isOpened():
     print('Video path is true.')
 else:
     print('Error, video path might be wrong.')
+
+if not os.path.exists("./results"):
+    os.mkdir("./results")
 
 fid = 1 # Frame counter
 # Save the every N frame of the video.
@@ -158,7 +163,7 @@ def find_Similar_Box(new_found_box,old_boxes):
 
 cap = cv2.VideoCapture(vid_path)
 
-out2= cv2.VideoWriter(f'./result_{video_name}_{time_string}.mp4',cv2.VideoWriter_fourcc(*'mp4v'),30,size)
+out2= cv2.VideoWriter(f'./results/result_{video_name}_{time_string}.mp4',cv2.VideoWriter_fourcc(*'mp4v'),30,size)
 
 i=0
 id=0
@@ -274,7 +279,7 @@ print("Processing took:",end_time-start_time)
 
 
 json_obj = json.dumps(loc_dict)
-file = open(f"result_{video_name}_{time_string}.json", 'w',encoding="utf-8")
+file = open(f"./results/result_{video_name}_{time_string}.json", 'w',encoding="utf-8")
 file.write(json_obj)
 shutil.rmtree('./objectTrackTemp',ignore_errors=True)
 shutil.rmtree('./objectTrackTemp',ignore_errors=True)
