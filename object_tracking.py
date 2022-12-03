@@ -23,6 +23,7 @@ parser.add_argument('--yolo','-y',type=str,default='./yolov5-master',help='path 
 parser.add_argument('--weights','-w',type=str,required=True,help='path to pt file')
 parser.add_argument('--frame','-f',type=int, default=20)
 parser.add_argument('--verbose', '-ve', type=bool, default=False, help="Show debug messages and detections in real time")
+parser.add_argument("--line",'-l',type=float,default=0.75, help="Place of the yellow line on screen")
 args = vars(parser.parse_args())
 
 vid_path = args['video']
@@ -32,6 +33,7 @@ yolo_path = args['yolo']
 weight_path = args['weights']
 jump_frame = args['frame']
 verbose=args['verbose']
+line_percent=args["line"]
 originalVid = cv2.VideoCapture(vid_path)
 length = int(originalVid.get(cv2.CAP_PROP_FRAME_COUNT))
 jumped_len = int(length/jump_frame)
@@ -195,7 +197,7 @@ while cap.isOpened():
                 id+=1
             
             else:#match with existing object
-                is_counted=trackablesList[close_ind].updateLoc(j[:4],w,h)
+                is_counted=trackablesList[close_ind].updateLoc(j[:4],w,h,line_percent)
                 if is_counted==True:
                     if trackablesList[close_ind].classid==0:
                         if(verbose):
@@ -216,7 +218,7 @@ while cap.isOpened():
         #tracking mode
         for ind,current_object in enumerate(trackablesList):
             if current_object.status==True:
-                rect,is_counted=current_object.updateTracker(frame,w,h)
+                rect,is_counted=current_object.updateTracker(frame,w,h,line_percent)
                 if is_counted==True:
                     if current_object.classid==0:
                         if(verbose):
@@ -234,7 +236,7 @@ while cap.isOpened():
     cv2.putText(frame,"Sheep count:"+str(sheep_cnt),(10,60),cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 255, 0, 255), 3)
     cv2.putText(frame,"Goat count:"+str(goat_cnt),(10,110),cv2.FONT_HERSHEY_SIMPLEX, 1,(204, 0, 102, 255), 3)
 
-    cv2.line(frame,(0,int(h*0.75)),(w,int(h*0.75)),(0,255,255),3)
+    cv2.line(frame,(0,int(h*line_percent)),(w,int(h*line_percent)),(0,255,255),3)
     
     #if we detected objects, draw their bboxes
     if len(trackablesList)>0:
