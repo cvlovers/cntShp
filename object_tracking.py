@@ -12,6 +12,10 @@ import json
 
 import trackedObject
 
+#capture starting time, will be used for performance measurement and result 
+start_time=time.time()
+time_string=time.strftime("%d-%b-%Y-%H:%M")
+
 #split command line arguments and assign them to variables
 parser = argparse.ArgumentParser()
 parser.add_argument('--video','-v',type=str, required=True, help="path to video with '/'")
@@ -149,7 +153,7 @@ def find_Similar_Box(new_found_box,old_boxes):
 
 cap = cv2.VideoCapture(vid_path)
 
-out2= cv2.VideoWriter('./result.mp4',cv2.VideoWriter_fourcc(*'mp4v'),30,size)
+out2= cv2.VideoWriter(f'./result_{video_name}_{time_string}.mp4',cv2.VideoWriter_fourcc(*'mp4v'),30,size)
 
 i=0
 id=0
@@ -223,7 +227,7 @@ while cap.isOpened():
     cv2.putText(frame,"Sheep count:"+str(sheep_cnt),(10,60),cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 255, 0, 255), 3)
     cv2.putText(frame,"Goat count:"+str(goat_cnt),(10,110),cv2.FONT_HERSHEY_SIMPLEX, 1,(204, 0, 102, 255), 3)
 
-    cv2.line(frame,(0,int(h*0.6)),(w,int(h*0.6)),(0,255,255),3)
+    cv2.line(frame,(0,int(h*0.75)),(w,int(h*0.75)),(0,255,255),3)
     
     #if we detected objects, draw their bboxes
     if len(trackablesList)>0:
@@ -242,17 +246,25 @@ while cap.isOpened():
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-    print("Processing...")
+    #print("Processing...")
 
 cap.release()
 out2.release()
 cv2.destroyAllWindows()
+
+end_time=time.time()
+
 print("Sheep count:",sheep_cnt)
 print("Goat count:",goat_cnt)
 print("Total must be:",sheep_cnt+goat_cnt)
 print("Lenght of list:",len(trackablesList))
+
+print("Processing took:",end_time-start_time)
+
+
+
 json_obj = json.dumps(loc_dict)
-file = open("result_shep_cropped.json", 'w',encoding="utf-8")
+file = open(f"result_{video_name}_{time_string}.json", 'w',encoding="utf-8")
 file.write(json_obj)
 shutil.rmtree('./objectTrackTemp',ignore_errors=True)
 shutil.rmtree('./objectTrackTemp',ignore_errors=True)
