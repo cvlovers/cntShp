@@ -7,6 +7,8 @@
 *.make
 objectTrackTemp/
 yolov5-master/
+runs/
+augmented100ep.pt
 makefile
 *.txt
 
