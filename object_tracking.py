@@ -22,6 +22,7 @@ parser.add_argument('--video','-v',type=str, required=True, help="path to video 
 parser.add_argument('--yolo','-y',type=str,default='./yolov5-master',help='path to yolo')
 parser.add_argument('--weights','-w',type=str,required=True,help='path to pt file')
 parser.add_argument('--frame','-f',type=int, default=20)
+parser.add_argument('--verbose', '-ve', type=bool, default=False, help="Show debug messages and detections in real time")
 args = vars(parser.parse_args())
 
 vid_path = args['video']
@@ -30,9 +31,11 @@ video_name = video_nameLong.split('.')[0]
 yolo_path = args['yolo']
 weight_path = args['weights']
 jump_frame = args['frame']
+verbose=args['verbose']
 originalVid = cv2.VideoCapture(vid_path)
 length = int(originalVid.get(cv2.CAP_PROP_FRAME_COUNT))
 jumped_len = int(length/jump_frame)
+
 
 
 #create temp folders and open source vid
@@ -195,10 +198,12 @@ while cap.isOpened():
                 is_counted=trackablesList[close_ind].updateLoc(j[:4],w,h)
                 if is_counted==True:
                     if trackablesList[close_ind].classid==0:
-                        print("Add 1 to sheep")
+                        if(verbose):
+                            print("Add 1 to sheep")
                         sheep_cnt+=1
                     else:
-                        print("Increase goat by 1")
+                        if(verbose):
+                            print("Increase goat by 1")
                         goat_cnt+=1
                 loc_dict[close_ind]["pos"].append({"frame":i,"x":j[0]+j[2]//2,"y":j[1]+j[3]//2})
 
@@ -214,10 +219,12 @@ while cap.isOpened():
                 rect,is_counted=current_object.updateTracker(frame,w,h)
                 if is_counted==True:
                     if current_object.classid==0:
-                        print("One sheep has passed the line")
+                        if(verbose):
+                            print("One sheep has passed the line")
                         sheep_cnt+=1
                     else:
-                        print("A goat is gone")
+                        if(verbose):
+                            print("A goat is gone")
                         goat_cnt+=1
                 j=list(map(int,rect))
                 loc_dict[ind]["pos"].append({"frame":i,"x":j[0]+j[2]//2,"y":j[1]+j[3]//2})
@@ -241,7 +248,8 @@ while cap.isOpened():
                 cv2.circle(frame,(box["x"],box["y"]),2,color,-1)
 
     i=i+1
-    #cv2.imshow('window', frame)
+    if(verbose):
+        cv2.imshow('window', frame)
     out2.write(frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
