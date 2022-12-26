@@ -23,7 +23,7 @@ parser.add_argument('--yolo','-y',type=str,default='./yolov5-master',help='path 
 parser.add_argument('--weights','-w',type=str,required=True,help='path to pt file')
 parser.add_argument('--frame','-f',type=int, default=20)
 parser.add_argument('--verbose', '-ve', type=bool, default=False, help="Show debug messages and detections in real time")
-parser.add_argument("--line",'-l',type=float,default=0.75, help="Place of the yellow line on screen")
+#parser.add_argument("--line",'-l',type=float,default=0.75, help="Place of the yellow line on screen")
 args = vars(parser.parse_args())
 
 vid_path = args['video']
@@ -33,7 +33,7 @@ yolo_path = args['yolo']
 weight_path = args['weights']
 jump_frame = args['frame']
 verbose=args['verbose']
-line_percent=args["line"]
+#line_percent=args["line"]
 originalVid = cv2.VideoCapture(vid_path)
 length = int(originalVid.get(cv2.CAP_PROP_FRAME_COUNT))
 jumped_len = int(length/jump_frame)
@@ -159,7 +159,40 @@ def find_Similar_Box(new_found_box,old_boxes):
     if similarity_points[sim_ind]<0.1:
         return -1
     return sim_ind
+
+def calculate_sheep_slope(posits): #takes the posiiton array for one sheep and returns its slope
+    x_init=posits[0]['x']
+    x_fin=posits[-1]['x']
+    y_init=posits[0]['y']
+    y_fin=posits[-1]['y']
+    return (y_fin-y_init)/(x_fin-x_init)
+
+def calculate_endpoints(loc_dict):  #given the locations dictionary, calculates coefficients for automatic line.
+    ids=list(loc_dict.keys())
+    slope=0.0
+    try:
+        for ind in ids:
+            slope += calculate_sheep_slope(loc_dict[ind]['pos'])
+            print(slope)
+        slope = slope /len(ids)
+        print(slope)
+        line_slope=-1/slope
+    except:
+        line_slope = 0 
     
+    if line_slope < 0:  #automatically choose known point based on slope
+        x_known=w
+        y_known=0
+    else:
+        x_known=0
+        y_known=0
+    a = line_slope
+    b = (-line_slope*x_known)+y_known
+
+    print(a,"x+",b)
+
+    return a,b
+
 
 cap = cv2.VideoCapture(vid_path)
 
@@ -172,10 +205,20 @@ goat_cnt=0
 trackablesList=[]
 color_list=[]
 loc_dict=dict()
+#temporary equation until line equation is calculated
+slope=0  
+coef=2*h/3
 
 while cap.isOpened():
     # Capture frame-by-frame
     ret, frame = cap.read()
+
+    
+    if sheep_cnt+goat_cnt == 15 and slope==0:  #for dynamic slope calculation
+        slope,coef = calculate_endpoints(loc_dict)
+        
+    # draw automatic line
+    cv2.line(frame,(0,int(slope*0+coef)),(w,int(slope*w+coef)),(255,0,255),3)      
     
     if i%jump_frame==0:
         #detection mode
@@ -193,16 +236,19 @@ while cap.isOpened():
         for j in bboxes:
             close_ind=find_Similar_Box(j,trackablesList)
             if close_ind<0:#create new box
-                new_object_found=trackedObject.trackableObject(j[:4],id,j[-1])
-                trackablesList.append(new_object_found)
-                loc_dict[id]=dict()
-                loc_dict[id]={"id":id,"pos":[]}
-                loc_dict[id]["pos"].append({"frame":i,"x":j[0]+j[2]//2,"y":j[1]+j[3]//2})
-                color_list.append((random.randint(0,255),random.randint(0,255),random.randint(0,255)))
-                id+=1
+                current_y = int(j[1]+j[3]/2) 
+                current_x= int(j[0]+j[2]/2)
+                if current_y < slope*current_x+coef:
+                    new_object_found=trackedObject.trackableObject(j[:4],id,j[-1])
+                    trackablesList.append(new_object_found)
+                    loc_dict[id]=dict()
+                    loc_dict[id]={"id":id,"pos":[]}
+                    loc_dict[id]["pos"].append({"frame":i,"x":j[0]+j[2]//2,"y":j[1]+j[3]//2})
+                    color_list.append((random.randint(0,255),random.randint(0,255),random.randint(0,255)))
+                    id+=1
             
             else:#match with existing object
-                is_counted=trackablesList[close_ind].updateLoc(j[:4],w,h,line_percent)
+                is_counted=trackablesList[close_ind].updateLoc(j[:4],w,h,slope,coef)
                 if is_counted==True:
                     if trackablesList[close_ind].classid==0:
                         if(verbose):
@@ -223,7 +269,7 @@ while cap.isOpened():
         #tracking mode
         for ind,current_object in enumerate(trackablesList):
             if current_object.status==True:
-                rect,is_counted=current_object.updateTracker(frame,w,h,line_percent)
+                rect,is_counted=current_object.updateTracker(frame,w,h,slope,coef)
                 if is_counted==True:
                     if current_object.classid==0:
                         if(verbose):
@@ -241,8 +287,6 @@ while cap.isOpened():
     cv2.putText(frame,"Sheep count:"+str(sheep_cnt),(10,60),cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 255, 0, 255), 3)
     cv2.putText(frame,"Goat count:"+str(goat_cnt),(10,110),cv2.FONT_HERSHEY_SIMPLEX, 1,(204, 0, 102, 255), 3)
 
-    cv2.line(frame,(0,int(h*line_percent)),(w,int(h*line_percent)),(0,255,255),3)
-    
     #if we detected objects, draw their bboxes
     if len(trackablesList)>0:
         draw_boxes(frame,trackablesList,i)
@@ -257,6 +301,7 @@ while cap.isOpened():
     i=i+1
     if(verbose):
         cv2.imshow('window', frame)
+    
     out2.write(frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -273,13 +318,13 @@ print("Sheep count:",sheep_cnt)
 print("Goat count:",goat_cnt)
 print("Total must be:",sheep_cnt+goat_cnt)
 print("Lenght of list:",len(trackablesList))
-
 print("Processing took:",end_time-start_time)
 
-
-
+#save result json
 json_obj = json.dumps(loc_dict)
 file = open(f"./results/result_{video_name}_{time_string}.json", 'w',encoding="utf-8")
 file.write(json_obj)
+
+#delete temp file
 shutil.rmtree('./objectTrackTemp',ignore_errors=True)
 shutil.rmtree('./objectTrackTemp',ignore_errors=True)

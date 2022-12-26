@@ -11,7 +11,7 @@ class trackableObject:
         self.classid=classid
         self.counted=False
 
-    def updateLoc(self,new_location,w,h,line_percent):
+    def updateLoc(self,new_location,w,h,line_slope, line_coef):
         if self.status==False:
             return False
         self.diff=((new_location[0]-self.loc[0])**2+(new_location[1]-self.loc[1])**2)**(0.5)
@@ -24,7 +24,7 @@ class trackableObject:
         else:
             self.missing_frame=0
 
-        if center[1]>=h*line_percent:
+        if center[1]>=line_slope*center[0]+line_coef or center[1]>h:
             self.tracker=None
             self.status=False
             self.counted=True
@@ -36,12 +36,12 @@ class trackableObject:
         
         return self.counted
 
-    def updateTracker(self,frame,w,h,line_percent):
+    def updateTracker(self,frame,w,h,line_slope, line_coef):
         if self.status==False:
             return
         ok,rect=self.tracker.update(frame)
         self.status=ok
-        is_counted=self.updateLoc(rect,w,h,line_percent)
+        is_counted=self.updateLoc(rect,w,h,line_slope,line_coef)
         return rect,is_counted
     
     def startTracking(self,frame):

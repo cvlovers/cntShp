@@ -9,6 +9,8 @@ objectTrackTemp/
 yolov5-master/
 runs/
 results/
+wandb/
+yolov5/
 augmented100ep.pt
 makefile
 *.txt
